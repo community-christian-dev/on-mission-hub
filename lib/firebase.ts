@@ -4,18 +4,16 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDV7DmpgQ-9L1ET2kfD0Py3Z4p-Q3xiRuo",
-  authDomain: "on-mission-hub.firebaseapp.com",
-  projectId: "on-mission-hub",
-  storageBucket: "on-mission-hub.firebasestorage.app",
-  messagingSenderId: "982300317498",
-  appId: "1:982300317498:web:1ff2df35bb697b90be6203",
-  measurementId: "G-XYWN774HSD"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// 1. Initialize Firebase (Singleton pattern to prevent re-initialization errors)
+// Initialize Firebase... (rest of the file stays the same)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// 2. EXPORT the services so other files can use them
 export const db = getFirestore(app);
 export const auth = getAuth(app);
