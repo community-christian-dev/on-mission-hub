@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, getDocs, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
-import { Trash2, Calendar, Save, Lock } from 'lucide-react';
+import { collection, doc, setDoc, getDocs, deleteDoc, query, limit } from 'firebase/firestore';
+import { Trash2, Calendar, Save } from 'lucide-react';
 
 interface Reading {
   id: string; // The date string (YYYY-MM-DD)
@@ -11,9 +11,6 @@ interface Reading {
 }
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  
   // Form State
   const [date, setDate] = useState('');
   const [reference, setReference] = useState('');
@@ -22,25 +19,16 @@ export default function AdminPage() {
   // List State
   const [readings, setReadings] = useState<Reading[]>([]);
 
+  // Load data immediately on mount
   useEffect(() => {
-    // Set default date to today
     const today = new Date().toISOString().split('T')[0];
     setDate(today);
+    fetchReadings();
   }, []);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      fetchReadings();
-    } else {
-      alert("Wrong password");
-    }
-  };
 
   const fetchReadings = async () => {
     try {
-      // Get upcoming readings (simple query)
+      // Get upcoming readings
       const q = query(collection(db, "daily_readings"), limit(20)); 
       const querySnapshot = await getDocs(q);
       const list: Reading[] = [];
@@ -67,10 +55,9 @@ export default function AdminPage() {
       });
       
       setStatus('Saved!');
-      setReference(''); // Clear input
+      setReference(''); // Clear input so you can type the next one easily
       fetchReadings();  // Refresh list
       
-      // Reset status after 2 seconds
       setTimeout(() => setStatus(''), 2000);
     } catch (error) {
       console.error(error);
@@ -87,28 +74,6 @@ export default function AdminPage() {
       console.error(error);
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-950">
-        <form onSubmit={handleLogin} className="flex flex-col gap-4 p-8 bg-slate-900 rounded-xl border border-slate-800">
-          <div className="flex items-center gap-2 text-white text-xl font-bold mb-2">
-            <Lock size={20} className="text-blue-500" /> Admin Access
-          </div>
-          <input 
-            type="password" 
-            placeholder="Enter Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-3 rounded bg-slate-800 text-white border border-slate-700 focus:border-blue-500 outline-none"
-          />
-          <button type="submit" className="bg-blue-600 text-white p-3 rounded hover:bg-blue-500 font-bold">
-            Unlock
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-8 font-sans">
