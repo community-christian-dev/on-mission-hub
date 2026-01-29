@@ -261,7 +261,7 @@ export default function OrbitVisualizer() {
       
       {/* HEADER Left */}
       <div className="absolute top-6 left-6 z-20 pointer-events-none">
-        <h1 className="text-3xl font-bold text-white tracking-tight">My Relational Orbit</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">My Orbit</h1>
         <p className="text-slate-400 text-sm mb-4">Tap a name to edit</p>
       </div>
 
