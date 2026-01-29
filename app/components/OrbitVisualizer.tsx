@@ -5,17 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Trash2, Sparkles, ArrowRight, Loader2, BookOpen } from 'lucide-react';
 
 // --- FIREBASE IMPORTS ---
-import { db, auth } from '@/lib/firebase'; 
+import { db, auth } from '@/lib/firebase'; // Ensure this path matches your project structure
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { 
-  collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc 
+  collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc 
 } from 'firebase/firestore';
 
 // --- TYPES ---
 type RingId = 'center' | 'friends' | 'acquaintances' | 'strangers' | 'places';
 
 interface OrbitItem {
-  id: string; // Firebase IDs are strings
+  id: string; 
   name: string;
   ring: RingId;
   prayer?: string;
@@ -36,8 +36,6 @@ const RINGS = [
   { id: 'strangers', label: 'Strangers', color: 'bg-purple-600', ringColor: 'border-purple-500/30', radius: 240, startAngle: 200 },
   { id: 'places', label: 'Places', color: 'bg-orange-600', ringColor: 'border-orange-500/30', radius: 305, startAngle: 300 },
 ];
-
-const FALLBACK_READING = "Psalm 23";
 
 // Helper to shuffle array
 const shuffle = <T,>(array: T[]): T[] => {
@@ -66,6 +64,8 @@ export default function OrbitVisualizer() {
   const [isReadingOpen, setIsReadingOpen] = useState(false);
   const [readingData, setReadingData] = useState<BibleReading | null>(null);
   const [loadingReading, setLoadingReading] = useState(false);
+  const [todaysReference, setTodaysReference] = useState<string | null>(null); // Stores the reference if it exists
+  const [checkingReading, setCheckingReading] = useState(true); // Initial load state for the button
 
   useEffect(() => { 
     setMounted(true); 
@@ -87,39 +87,43 @@ export default function OrbitVisualizer() {
         });
         return () => unsubscribeSnapshot();
       } else {
-        // Sign in anonymously if not logged in
         await signInAnonymously(auth);
       }
     });
 
+    // 2. CHECK FOR DAILY READING (IMMEDIATELY)
+    const checkReading = async () => {
+        const today = new Date().toISOString().split('T')[0];
+        try {
+            const docRef = doc(db, "daily_readings", today);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setTodaysReference(docSnap.data().reference);
+            } else {
+                setTodaysReference(null);
+            }
+        } catch (error) {
+            console.error("Error checking reading:", error);
+        } finally {
+            setCheckingReading(false);
+        }
+    };
+    checkReading();
+
     return () => unsubscribeAuth();
   }, []);
 
-  // --- API: FETCH READING ---
+  // --- API: FETCH READING CONTENT ---
   const openDailyReading = async () => {
+    if (!todaysReference) return;
     setIsReadingOpen(true);
-    if (readingData) return; 
+    if (readingData && readingData.reference === todaysReference) return; // Don't refetch if already loaded
 
     setLoadingReading(true);
     
-    // 1. Determine "Today's" Reference
-    const today = new Date().toISOString().split('T')[0]; // "2023-XX-XX"
-    let ref = FALLBACK_READING;
-
-    // Check Firestore for Admin Schedule
     try {
-      const docRef = doc(db, "daily_readings", today);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        ref = docSnap.data().reference;
-      }
-    } catch (err) {
-      console.log("Using fallback reading", err);
-    }
-
-    try {
-      // 2. Call Free Bible API
-      const res = await fetch(`https://bible-api.com/${ref}?translation=web`);
+      // Call Free Bible API
+      const res = await fetch(`https://bible-api.com/${todaysReference}?translation=web`);
       const data = await res.json();
       
       setReadingData({
@@ -135,7 +139,6 @@ export default function OrbitVisualizer() {
   };
 
   // --- MOCK API: GENERATE PROMPTS ---
-  // (You will replace this with a real AI call later)
   const generatePrompts = async (selectedItems: OrbitItem[]): Promise<OrbitItem[]> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -265,14 +268,23 @@ export default function OrbitVisualizer() {
         <p className="text-slate-400 text-sm mb-4">Tap a name to edit</p>
       </div>
 
-      <motion.button
-        onClick={openDailyReading}
-        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-        className="absolute top-24 left-6 z-20 pointer-events-auto flex items-center gap-2 bg-slate-800/80 backdrop-blur-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 py-2 px-4 rounded-full transition-all text-sm font-medium"
-      >
-        <BookOpen size={16} />
-        <span>Daily Scripture Reading</span>
-      </motion.button>
+      {/* DAILY WORD BUTTON / STATUS */}
+      <div className="absolute top-24 left-6 z-20 pointer-events-auto">
+        {!checkingReading && todaysReference ? (
+            <motion.button
+                onClick={openDailyReading}
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 py-2 px-4 rounded-full transition-all text-sm font-medium"
+            >
+                <BookOpen size={16} />
+                <span>Daily Word</span>
+            </motion.button>
+        ) : !checkingReading ? (
+            <div className="text-slate-500 text-sm italic py-2 px-1">
+                No scripture readings today
+            </div>
+        ) : null}
+      </div>
       
       {/* START PRAYER BUTTON (Top Right) */}
       <motion.button
@@ -409,7 +421,7 @@ export default function OrbitVisualizer() {
           <div className="fixed inset-0 z-[150] flex items-center justify-center px-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setIsReadingOpen(false)} />
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50"><div><h2 className="text-xl font-bold text-white flex items-center gap-2"><BookOpen size={20} className="text-blue-500" />Daily Scripture Reading</h2><p className="text-xs text-slate-400 uppercase tracking-wider mt-1">Today's Reading</p></div><button onClick={() => setIsReadingOpen(false)} className="text-slate-400 hover:text-white"><X size={24} /></button></div>
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50"><div><h2 className="text-xl font-bold text-white flex items-center gap-2"><BookOpen size={20} className="text-blue-500" />Daily Word</h2><p className="text-xs text-slate-400 uppercase tracking-wider mt-1">Today's Reading</p></div><button onClick={() => setIsReadingOpen(false)} className="text-slate-400 hover:text-white"><X size={24} /></button></div>
               <div className="p-8 overflow-y-auto custom-scrollbar">{loadingReading ? (<div className="flex flex-col items-center justify-center py-12 space-y-4"><Loader2 size={32} className="text-blue-500 animate-spin" /><p className="text-slate-400">Opening the scroll...</p></div>) : readingData ? (<div className="prose prose-invert max-w-none"><h3 className="text-2xl font-serif text-slate-100 mb-2">{readingData.reference}</h3><p className="text-sm text-slate-500 mb-6 font-mono">{readingData.translation_name}</p><div className="text-lg leading-relaxed text-slate-300 font-serif whitespace-pre-line">{readingData.text}</div></div>) : (<div className="text-center text-slate-500">Failed to load reading. Please try again.</div>)}</div>
               <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-end"><button onClick={() => setIsReadingOpen(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors">Close</button></div>
             </motion.div>
