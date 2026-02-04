@@ -1,0 +1,6 @@
+- Fix OrbitItems
+  - Positioning
+    - Automatically space items around corresponding ring with offset angles
+    - Adjust positioning as the radius changes, keep item on its given ring
+  - Visibility
+    - Keep items collapsed if corresponding orbit is not selected
