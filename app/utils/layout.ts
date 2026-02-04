@@ -28,3 +28,8 @@ export const getSize = (
   if (selectedRing === -1 || index < selectedRing) return baseSize;
   else return baseSize + expandedSize;
 };
+
+export default {
+  useViewportMin,
+  getSize,
+};

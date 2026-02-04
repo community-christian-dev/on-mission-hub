@@ -53,9 +53,9 @@ export default function Home() {
   };
 
   return (
-    <AdminPage />
-    // <div className="flex min-h-screen flex-col items-center bg-zinc-900">
-    /* <Header
+    // <AdminPage />
+    <div className="flex min-h-screen flex-col items-center bg-zinc-900">
+      <Header
         openEditModal={openEditModal}
         openReadingModal={() => setIsReadingModalOpen(true)}
         openMonthlyActionModal={() => setIsMonthlyActionModalOpen(true)}
@@ -86,8 +86,7 @@ export default function Home() {
           isOpen={isMonthlyActionModalOpen}
           closeModal={() => setIsMonthlyActionModalOpen(false)}
         />
-      </AnimatePresence> */
-
-    // </div>
+      </AnimatePresence>
+    </div>
   );
 }
