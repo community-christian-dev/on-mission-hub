@@ -8,10 +8,11 @@ import { RingData } from "./data/RingData";
 import { OrbitItemType } from "./components/OrbitItem";
 import { AnimatePresence } from "framer-motion";
 import ReadingModal from "./components/ReadingModal";
-import PrayerModal from "./components/PrayerModal";
+import PrayerModal from "./components/Prayer/PrayerModal";
 import MonthlyActionModal from "./components/MonthlyActionModal";
 import AdminPage from "./admin/page";
 import { useOrbit } from "./hooks/useOrbit";
+import PrayerSession from "./components/Prayer/PrayerSession";
 
 export default function Home() {
   const { items, addItem, updateItem, deleteItem } = useOrbit();
@@ -80,6 +81,8 @@ export default function Home() {
     setIsPrayerModalLoading(true);
     setIsPrayerModalOpen(true);
 
+    let n = Math.min(3, items.length);
+
     setPrayerQueue(getRandomItems(3));
   };
 
@@ -109,6 +112,7 @@ export default function Home() {
           isOpen={isReadingModalOpen}
           closeModal={() => setIsReadingModalOpen(false)}
         />
+        <PrayerSession items={items} />
         <PrayerModal
           key="prayer"
           isOpen={isPrayerModalOpen}

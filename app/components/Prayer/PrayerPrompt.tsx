@@ -16,10 +16,13 @@ const colorMap: { [key: string]: string } = {
 
 const PrayerPrompt = ({ name, ring, prayer }: PrayerPromptProps) => {
   return (
-    <>
+    // 1. Changed Fragment <> to a <div> to give Framer a solid bounding box to measure
+    <div className="w-full">
       <div className="flex items-center space-x-4 mb-8">
         <div
-          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-white ${colorMap[ring] || "bg-slate-500"}`}
+          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-white shadow-lg ${
+            colorMap[ring] || "bg-slate-500"
+          }`}
         >
           {name.charAt(0).toUpperCase()}
         </div>
@@ -30,12 +33,14 @@ const PrayerPrompt = ({ name, ring, prayer }: PrayerPromptProps) => {
           </p>
         </div>
       </div>
+
+      {/* 2. Keeps the margin to ensure text doesn't overlap the absolute 'Next' button */}
       <div className="mb-10 relative pl-6 border-l-4 border-indigo-500">
         <p className="text-lg text-slate-200 italic leading-relaxed">
           "{prayer || "No prayer provided."}"
         </p>
       </div>
-    </>
+    </div>
   );
 };
 
