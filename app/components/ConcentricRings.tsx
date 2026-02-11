@@ -1,20 +1,19 @@
 "use client";
 
+
 import Ring from "./Ring";
 import { RingData, RingType } from "../data/RingData";
 import { useState } from "react";
 import RingSelection from "./RingSelection";
 import OrbitItem, { OrbitItemType } from "./OrbitItem";
-import MockItems from "../data/MockItems";
 import { useViewportMin, getSize } from "../utils/layout";
-
-const items = MockItems;
 
 interface ConcentricRingsProps {
   onItemClick: (item?: OrbitItemType) => void;
+  items: OrbitItemType[];
 }
 
-const ConcentricRings = ({ onItemClick }: ConcentricRingsProps) => {
+const ConcentricRings = ({ onItemClick, items }: ConcentricRingsProps) => {
   const [selectedRing, setSelectedRing] = useState(-1);
   const viewportMin = useViewportMin();
 

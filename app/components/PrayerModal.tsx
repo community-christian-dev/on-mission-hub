@@ -1,13 +1,38 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import PrayerPrompt from "./PrayerPrompt";
+import BreathPrayer from "./BreathPrayer";
+import { CountdownCircleTimer } from "react-countdown-circle-timer";
 
 interface PrayerModalProps {
   isOpen: boolean;
+  isLoading: boolean;
   prayerQueue: any[];
   closeModal: () => void;
 }
 
+const colorMap: { [key: string]: string } = {
+  center: "bg-yellow-500",
+  friends: "bg-blue-500",
+  acquaintances: "bg-teal-500",
+  strangers: "bg-purple-500",
+  places: "bg-orange-500",
+};
+
 const PrayerModal = ({ isOpen, prayerQueue, closeModal }: PrayerModalProps) => {
+  const [isBreathPrayer, setIsBreathPrayer] = useState(true);
+  const [currentPrayerIndex, setCurrentPrayerIndex] = useState(0);
+
+  const handleNext = () => {
+    if (currentPrayerIndex < prayerQueue.length - 1) {
+      setCurrentPrayerIndex(currentPrayerIndex + 1);
+    } else {
+      closeModal();
+      setCurrentPrayerIndex(0);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && prayerQueue.length > 0 && (
@@ -29,27 +54,45 @@ const PrayerModal = ({ isOpen, prayerQueue, closeModal }: PrayerModalProps) => {
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
             <button
-              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+              className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
               onClick={closeModal}
             >
               <X size={20} />
             </button>
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-white bg-blue-500">
-                {prayerQueue[0].name.charAt(0).toUpperCase()}
+            {isBreathPrayer ? (
+              <div className="absolute bottom-4 right-4">
+                <CountdownCircleTimer
+                  isPlaying
+                  duration={20}
+                  colors={"#615fff"}
+                  size={32}
+                  strokeWidth={4}
+                  onComplete={() => setIsBreathPrayer(false)}
+                />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">
-                  {prayerQueue[0].name}
-                </h2>
-                <p className="text-sm text-slate-400">{prayerQueue[0].ring} </p>
-              </div>
-            </div>
-            <div className="mb-10 relative pl-6 border-l-4 border-indigo-500">
-              <p className="text-lg text-slate-200 italic leading-relaxed">
-                "{prayerQueue[0].prayer || "No prayer provided."}"
-              </p>
-            </div>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="absolute bottom-4 right-4 flex gap-1 items-center justify-center font-bold py-1 px-4 text-lg rounded-full bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
+              >
+                Next <ArrowRight size={16} strokeWidth={4} />
+              </button>
+            )}
+
+            {currentPrayerIndex === 0 ? (
+              <BreathPrayer />
+            ) : (
+              <PrayerPrompt
+                name={prayerQueue[currentPrayerIndex - 1].name}
+                ring={prayerQueue[currentPrayerIndex - 1].ring}
+                prayer={prayerQueue[currentPrayerIndex - 1].prayer}
+              />
+            )}
+            {/* <PrayerPrompt
+              name={prayerQueue[currentPrayerIndex].name}
+              ring={prayerQueue[currentPrayerIndex].ring}
+              prayer={prayerQueue[currentPrayerIndex].prayer}
+            /> */}
           </motion.div>
         </div>
       )}

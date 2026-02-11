@@ -33,7 +33,7 @@ const MonthlyActionModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Calendar size={20} className="text-sky-500" /> Monthly Action
                 </h2>
-                <p className="text-xs text-zinc-400 uppercase tracking-wider mt-1">
+                <p className="text-sm font-mono text-zinc-400 uppercase tracking-wider mt-1">
                   Praying Through My Orbit
                 </p>
               </div>

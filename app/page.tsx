@@ -9,16 +9,17 @@ import { OrbitItemType } from "./components/OrbitItem";
 import { AnimatePresence } from "framer-motion";
 import ReadingModal from "./components/ReadingModal";
 import PrayerModal from "./components/PrayerModal";
-import MockItems from "./data/MockItems";
 import MonthlyActionModal from "./components/MonthlyActionModal";
 import AdminPage from "./admin/page";
+import { useOrbit } from "./hooks/useOrbit";
 
 export default function Home() {
+  const { items, addItem, updateItem, deleteItem } = useOrbit();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    ring: RingData[0].id,
+    ring: RingData[0]?.id || "center",
     prayer: "",
   });
 
@@ -26,6 +27,8 @@ export default function Home() {
   const [isMonthlyActionModalOpen, setIsMonthlyActionModalOpen] =
     useState(false);
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
+  const [isPrayerModalLoading, setIsPrayerModalLoading] = useState(false);
+  const [prayerQueue, setPrayerQueue] = useState<OrbitItemType[]>([]);
 
   const openEditModal = (item?: OrbitItemType) => {
     if (item) {
@@ -37,19 +40,47 @@ export default function Home() {
       });
     } else {
       setEditingId(null);
-      setFormData({ name: "", ring: RingData[0].id, prayer: "" });
+      setFormData({ name: "", ring: RingData[0]?.id || "center", prayer: "" });
     }
     setIsEditModalOpen(true);
   };
 
-  const handleSave = () => {
-    alert("Item Saved");
+  const handleSave = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+    if (editingId) {
+      await updateItem(editingId, formData);
+    } else {
+      await addItem(formData);
+    }
     setIsEditModalOpen(false);
   };
 
-  const handleDelete = () => {
-    alert("Item Deleted");
+  const handleDelete = async () => {
+    if (editingId) {
+      await deleteItem(editingId);
+    }
     setIsEditModalOpen(false);
+  };
+
+  const getRandomItems = (num: number) => {
+    const shuffledItems = [...items];
+
+    for (let i = shuffledItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledItems[i], shuffledItems[j]] = [
+        shuffledItems[j],
+        shuffledItems[i],
+      ];
+    }
+
+    return shuffledItems.slice(0, num);
+  };
+
+  const startPrayer = () => {
+    setIsPrayerModalLoading(true);
+    setIsPrayerModalOpen(true);
+
+    setPrayerQueue(getRandomItems(3));
   };
 
   return (
@@ -59,9 +90,9 @@ export default function Home() {
         openEditModal={openEditModal}
         openReadingModal={() => setIsReadingModalOpen(true)}
         openMonthlyActionModal={() => setIsMonthlyActionModalOpen(true)}
-        openPrayerModal={() => setIsPrayerModalOpen(true)}
+        openPrayerModal={() => startPrayer()}
       />
-      <ConcentricRings onItemClick={openEditModal} />
+      <ConcentricRings onItemClick={openEditModal} items={items} />
       <AnimatePresence>
         <EditModal
           key={"edit"}
@@ -74,15 +105,19 @@ export default function Home() {
           setFormData={setFormData}
         />
         <ReadingModal
+          key="reading"
           isOpen={isReadingModalOpen}
           closeModal={() => setIsReadingModalOpen(false)}
         />
         <PrayerModal
+          key="prayer"
           isOpen={isPrayerModalOpen}
-          prayerQueue={MockItems}
+          isLoading={isPrayerModalLoading}
+          prayerQueue={prayerQueue}
           closeModal={() => setIsPrayerModalOpen(false)}
         />
         <MonthlyActionModal
+          key="monthly"
           isOpen={isMonthlyActionModalOpen}
           closeModal={() => setIsMonthlyActionModalOpen(false)}
         />

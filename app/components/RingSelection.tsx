@@ -73,7 +73,7 @@ const RingSelection = ({ onClick, openEditModal }: RingSelectionProps) => {
           onClick={onClick}
         />
       ))}
-      <AddOrbitItemButton onClick={openEditModal} />
+      <AddOrbitItemButton onClick={() => openEditModal()} />
     </div>
   );
 };

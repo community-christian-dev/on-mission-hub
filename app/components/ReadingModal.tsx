@@ -48,7 +48,7 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                   <BookOpen size={20} className="text-sky-500" /> Daily
                   Scripture Reading
                 </h2>
-                <p className="text-xs text-zinc-400 uppercase tracking-wider mt-1">
+                <p className="text-sm text-zinc-400 font-mono uppercase tracking-wider mt-1">
                   Today's Reading
                 </p>
               </div>
@@ -67,7 +67,7 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                 <h3 className="text-3xl font-serif text-zinc-100 mb-1">
                   {data?.reference ?? (isLoading ? "Loading…" : "Reference")}
                 </h3>
-                <p className="text-sm text-zinc-500 font-mono tracking-widest">
+                <p className="text-medium text-zinc-500 font-mono tracking-widest">
                   NIV
                 </p>
               </div>

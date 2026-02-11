@@ -9,7 +9,7 @@ const ButtonBar = ({ openEditModal }: ButtonBarProps) => {
   return (
     <div className="absolute top-6 right-6 flex flex-row items-center justify-end gap-4">
       <PrayerButton />
-      <AddOrbitItemButton onClick={openEditModal} />
+      <AddOrbitItemButton onClick={() => openEditModal()} />
     </div>
   );
 };
