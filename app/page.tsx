@@ -128,7 +128,7 @@ export default function Home() {
         {isPrayerSessionOpen && (
           <PrayerSession
             key="prayer-session"
-            items={prayerQueue}
+            items={items}
             onClose={() => setIsPrayerSessionOpen(false)}
           />
         )}

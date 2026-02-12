@@ -17,23 +17,32 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
     [],
   );
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [prayerQueue, setPrayerQueue] = useState<OrbitItemType[]>([]);
 
   // const generateMutation = useGeneratePrayerPrompts();
   // const logPrayerMutation = useLogPrayer();
 
   const handleStart = async () => {
+    setSessionState("loading");
+
+    const shuffled = [...items].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, Math.min(3, items.length));
+    setPrayerQueue(selected);
+
+    setCurrentIndex(0);
+
     setSessionState("praying");
   };
 
   const handleNext = async () => {
     // Log the completed prayer
-    const currentPrompt = prompts[currentIndex];
+    // const currentPrompt = prompts[currentIndex];
     // logPrayerMutation.mutate({
     //   orbitItemId: currentPrompt.itemId,
     //   prompt: currentPrompt.text,
     // });
 
-    if (currentIndex < prompts.length - 1) {
+    if (currentIndex < prayerQueue.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
       setSessionState("completed");
@@ -42,7 +51,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
 
   const currentPrompt = prompts[currentIndex];
   // const currentItem = items.find((i) => i.id === currentPrompt?.itemId);
-  const currentItem = items[currentIndex];
+  const currentItem = prayerQueue[currentIndex];
 
   const colorMap: { [key: string]: string } = {
     center: "bg-yellow-500",
@@ -147,7 +156,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
               </div>
             </div>
             <p className="text-center mt-4 text-md text-slate-400">
-              {currentIndex + 1} of {items.length}
+              {currentIndex + 1} of {prayerQueue.length}
             </p>
           </motion.div>
         )}
