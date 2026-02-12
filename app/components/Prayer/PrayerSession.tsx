@@ -2,9 +2,10 @@ import { useState } from "react";
 import { X, Sparkles, Loader2, Check, ArrowRight } from "lucide-react";
 import { PiHandsPraying } from "react-icons/pi";
 import { AnimatePresence, motion } from "framer-motion";
+import { OrbitItemType } from "../OrbitItem";
 
 interface PrayerSessionProps {
-  items: OrbitItem[];
+  items: OrbitItemType[];
   onClose: () => void;
 }
 
@@ -21,26 +22,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   // const logPrayerMutation = useLogPrayer();
 
   const handleStart = async () => {
-    setSessionState("loading");
-
-    // Pick up to 3 random items
-    const shuffled = [...items].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, Math.min(3, items.length));
-    const selectedIds = selected.map((i) => i.id);
-
-    try {
-      const result = await generateMutation.mutateAsync(selectedIds);
-      setPrompts(result.prompt);
-      setSessionState("praying");
-    } catch (err) {
-      console.error(err);
-      const fallbackPrompts = selected.map((item) => ({
-        itemId: item.id,
-        text: `Pray for ${item.name}'s well-being and that you might be a light in their life today.`,
-      }));
-      setPrompts(fallbackPrompts);
-      setSessionState("praying");
-    }
+    setSessionState("praying");
   };
 
   const handleNext = async () => {
