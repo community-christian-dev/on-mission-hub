@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { X, Sparkles, Loader2, Check, ArrowRight } from "lucide-react";
-import { PiHandsPraying } from "react-icons/pi";
+import { X, Loader2, Check, ArrowRight } from "lucide-react";
+// import { PiHandsPraying } from "react-icons/pi"; // Unused in this snippet
 import { AnimatePresence, motion } from "framer-motion";
 import { OrbitItemType } from "../OrbitItem";
+import { useGeneratePrayerPrompts } from "../../hooks/usePrayer";
 
 interface PrayerSessionProps {
   items: OrbitItemType[];
@@ -13,35 +14,46 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   const [sessionState, setSessionState] = useState<
     "intro" | "loading" | "praying" | "completed"
   >("intro");
-  const [prompts, setPrompts] = useState<{ itemId: number; text: string }[]>(
+
+  // Stores the AI text response
+  const [prompts, setPrompts] = useState<{ itemId: string; text: string }[]>(
     [],
   );
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [prayerQueue, setPrayerQueue] = useState<OrbitItemType[]>([]);
 
-  // const generateMutation = useGeneratePrayerPrompts();
-  // const logPrayerMutation = useLogPrayer();
+  // Stores the actual people objects selected for this session
+  const [prayerQueue, setPrayerQueue] = useState<OrbitItemType[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const generateMutation = useGeneratePrayerPrompts();
 
   const handleStart = async () => {
     setSessionState("loading");
 
+    // 1. Select 3 random people
     const shuffled = [...items].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, Math.min(3, items.length));
+
+    // Save selected items to state
     setPrayerQueue(selected);
 
-    setCurrentIndex(0);
-
-    setSessionState("praying");
+    try {
+      // 2. Call OpenAI API with full item data
+      const result = await generateMutation.mutateAsync(selected);
+      setPrompts(result);
+      setSessionState("praying");
+    } catch (err) {
+      console.error(err);
+      // Fallback: Use local generation if API fails
+      const fallbackPrompts = selected.map((item) => ({
+        itemId: item.id,
+        text: `Pray for ${item.name}'s well-being and that you might be a light in their life today.`,
+      }));
+      setPrompts(fallbackPrompts);
+      setSessionState("praying");
+    }
   };
 
-  const handleNext = async () => {
-    // Log the completed prayer
-    // const currentPrompt = prompts[currentIndex];
-    // logPrayerMutation.mutate({
-    //   orbitItemId: currentPrompt.itemId,
-    //   prompt: currentPrompt.text,
-    // });
-
+  const handleNext = () => {
     if (currentIndex < prayerQueue.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
@@ -49,9 +61,10 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
     }
   };
 
-  const currentPrompt = prompts[currentIndex];
-  // const currentItem = items.find((i) => i.id === currentPrompt?.itemId);
+  // Helper to safely get current data
   const currentItem = prayerQueue[currentIndex];
+  // Find the specific AI prompt for this person
+  const currentPrompt = prompts.find((p) => p.itemId === currentItem?.id);
 
   const colorMap: { [key: string]: string } = {
     center: "bg-yellow-500",
@@ -62,7 +75,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-r from-indigo-950/70 to-blue-950/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-r from-indigo-950/90 to-blue-950/90 backdrop-blur-sm p-4">
       <button
         className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors"
         onClick={onClose}
@@ -79,9 +92,6 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
             exit={{ opacity: 0, y: -20 }}
             className="text-center max-w-md space-y-6"
           >
-            {/* <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <PiHandsPraying className="w-10 h-10 text-indigo-500 " />
-            </div> */}
             <h2 className="text-3xl font-bold text-white">Guided Prayer</h2>
             <p className="text-slate-400 text-lg">
               Take a few moments to lift up the people in your orbit. We'll
@@ -111,19 +121,20 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
 
         {sessionState === "praying" && currentItem && (
           <motion.div
-            key={`prayer-${currentIndex}`}
+            key={`prayer-${currentItem.id}`} // Use ID for smoother Framer Motion transitions
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="w-full max-w-lg"
           >
-            <div className="bg-slate-900 border-white/10 shadow-2xl rounded-2xl overflow-hidden relative">
+            <div className="bg-slate-900 border border-white/10 shadow-2xl rounded-2xl overflow-hidden relative">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
               <div className="p-8 space-y-6">
-                <div className="flex items-center space-x-5 mb-8">
+                {/* Header: Person Info */}
+                <div className="flex items-center space-x-5 mb-4">
                   <div
-                    className={`${colorMap[currentItem.ring] || "bg-indigo-500"} w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-xl`}
+                    className={`${colorMap[currentItem.ring] || "bg-indigo-500"} w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-xl shrink-0`}
                   >
                     {currentItem.name.charAt(0).toUpperCase()}
                   </div>
@@ -139,16 +150,30 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
                   </div>
                 </div>
 
-                <div className="mb-10 relative pl-6 border-l-4 border-indigo-500">
-                  <p className="text-xl text-slate-200 italic leading-relaxed">
-                    "{currentItem.prayer || "No prayer provided."}"
+                {/* AI Prompt Area */}
+                <div className="relative pl-6 border-l-4 border-indigo-500">
+                  <p className="text-xl text-white italic leading-relaxed">
+                    {/* FIX: Display the AI Prompt here, not the original DB item */}
+                    "{currentPrompt?.text || "..."}"
                   </p>
                 </div>
 
-                <div className="pt-6 flex justify-end">
+                {/* Original Prayer Request Context (Optional but helpful) */}
+                {currentItem.prayer && (
+                  <div className="bg-white/5 p-4 rounded-lg">
+                    <p className="text-xs uppercase text-slate-500 mb-1">
+                      Original Request:
+                    </p>
+                    <p className="text-sm text-slate-300">
+                      {currentItem.prayer}
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end">
                   <button
                     onClick={handleNext}
-                    className="gap-2 px-8 py-2 text-lg font-bold bg-indigo-500/60 hover:bg-indigo-500/70 transition-colors rounded-xl"
+                    className="flex items-center gap-2 px-8 py-3 text-lg font-bold bg-indigo-600 hover:bg-indigo-500 transition-colors rounded-xl text-white"
                   >
                     <ArrowRight size={18} strokeWidth={3} />
                   </button>
@@ -161,7 +186,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
           </motion.div>
         )}
 
-        {sessionState == "completed" && (
+        {sessionState === "completed" && (
           <motion.div
             key="completed"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -178,7 +203,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
             </p>
             <button
               onClick={onClose}
-              className="w-full border border-white text-lg font-bold h-12 hover:bg-white/10 transition-colors rounded-xl"
+              className="w-full border border-white text-white text-lg font-bold h-12 hover:bg-white/10 transition-colors rounded-xl"
             >
               Return to Orbit
             </button>

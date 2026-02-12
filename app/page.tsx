@@ -78,15 +78,6 @@ export default function Home() {
     return shuffledItems.slice(0, num);
   };
 
-  const startPrayer = () => {
-    setIsPrayerModalLoading(true);
-    setIsPrayerModalOpen(true);
-
-    let n = Math.min(3, items.length);
-
-    setPrayerQueue(getRandomItems(3));
-  };
-
   return (
     // <AdminPage />
     <div className="flex min-h-screen flex-col items-center bg-zinc-900">
@@ -112,13 +103,6 @@ export default function Home() {
           key="reading"
           isOpen={isReadingModalOpen}
           closeModal={() => setIsReadingModalOpen(false)}
-        />
-        <PrayerModal
-          key="prayer"
-          isOpen={isPrayerModalOpen}
-          isLoading={isPrayerModalLoading}
-          prayerQueue={prayerQueue}
-          closeModal={() => setIsPrayerModalOpen(false)}
         />
         <MonthlyActionModal
           key="monthly"
