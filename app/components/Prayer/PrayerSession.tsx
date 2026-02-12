@@ -75,7 +75,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-r from-indigo-950/90 to-blue-950/90 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm">
       <button
         className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors"
         onClick={onClose}

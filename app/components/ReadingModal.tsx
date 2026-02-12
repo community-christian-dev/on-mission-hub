@@ -1,9 +1,10 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, BookOpen, Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useGetReadingContent } from "../hooks/useGetReadingContent";
+import { useReadings } from "../hooks/useReadings";
+import { getCurrentNYDate, formatDateKey } from "../utils/dateUtils";
 
 interface ReadingModalProps {
   isOpen: boolean;
@@ -11,18 +12,51 @@ interface ReadingModalProps {
 }
 
 const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
-  const queryClient = useQueryClient();
-  const cacheKey = ["reading", "111", "JHN.5"];
-  const cached = queryClient.getQueryData(cacheKey) as any | undefined;
+  const [todayKey, setTodayKey] = useState<string>("");
+  const [reference, setReference] = useState<string | null>(null);
 
+  // Fetch all readings
+  const { data: readings = [] } = useReadings();
+
+  // Update today's key when modal opens or date override changes
+  useEffect(() => {
+    if (isOpen) {
+      const updateTodayKey = () => {
+        const today = getCurrentNYDate();
+        const key = formatDateKey(today);
+        setTodayKey(key);
+      };
+
+      updateTodayKey();
+
+      // Listen for storage changes (date override updates)
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === "dateOverride") {
+          updateTodayKey();
+        }
+      };
+
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
+    }
+  }, [isOpen]);
+
+  // Find today's reading
+  useEffect(() => {
+    if (todayKey && readings.length > 0) {
+      const todayReading = readings.find((r) => r.id === todayKey);
+      setReference(todayReading?.reference || null);
+    }
+  }, [todayKey, readings]);
+
+  // Fetch content from YouVersion API
   const { data, isLoading, isError, error } = useGetReadingContent(
-    "111",
-    "JHN.4",
+    "111", // NIV version
+    reference || "",
     {
-      queryKey: cacheKey,
-      enabled: !cached,
-      initialData: cached,
-    },
+      queryKey: ["reading", "111", reference || ""],
+      enabled: !!reference && isOpen,
+    }
   );
 
   return (
@@ -49,7 +83,14 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                   Scripture Reading
                 </h2>
                 <p className="text-sm text-zinc-400 font-mono uppercase tracking-wider mt-1">
-                  Today's Reading
+                  {todayKey
+                    ? new Date(todayKey + "T00:00:00").toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                    : "Today's Reading"}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -63,32 +104,42 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
             </div>
 
             <div className="p-8 overflow-y-auto custom-scrollbar flex-1 relative">
-              <div className="prose prose-invert max-w-none h-full flex flex-col mb-6">
-                <h3 className="text-3xl font-serif text-zinc-100 mb-1">
-                  {data?.reference ?? (isLoading ? "Loading…" : "Reference")}
-                </h3>
-                <p className="text-medium text-zinc-500 font-mono tracking-widest">
-                  NIV
-                </p>
-              </div>
-
-              {isLoading ? (
-                <div className="flex items-center gap-2 text-zinc-400">
-                  <Loader2 className="animate-spin" /> Loading…
+              {!reference ? (
+                <div className="text-center py-12">
+                  <p className="text-zinc-400 text-lg">
+                    No reading scheduled for today
+                  </p>
                 </div>
-              ) : isError ? (
-                <div className="text-red-400">
-                  Error: {(error as Error)?.message || "Failed to load."}
-                </div>
-              ) : data?.content ? (
-                <div
-                  className="text-xl leading-loose text-slate-300 font-serif"
-                  dangerouslySetInnerHTML={{ __html: data.content }}
-                />
               ) : (
-                <div className="text-xl leading-loose text-slate-300 font-serif whitespace-pre-line">
-                  No content available
-                </div>
+                <>
+                  <div className="prose prose-invert max-w-none h-full flex flex-col mb-6">
+                    <h3 className="text-3xl font-serif text-zinc-100 mb-1">
+                      {data?.reference ?? (isLoading ? "Loading…" : reference)}
+                    </h3>
+                    <p className="text-medium text-zinc-500 font-mono tracking-widest">
+                      NIV
+                    </p>
+                  </div>
+
+                  {isLoading ? (
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <Loader2 className="animate-spin" /> Loading…
+                    </div>
+                  ) : isError ? (
+                    <div className="text-red-400">
+                      Error: {(error as Error)?.message || "Failed to load."}
+                    </div>
+                  ) : data?.content ? (
+                    <div
+                      className="text-xl leading-loose text-slate-300 font-serif"
+                      dangerouslySetInnerHTML={{ __html: data.content }}
+                    />
+                  ) : (
+                    <div className="text-xl leading-loose text-slate-300 font-serif whitespace-pre-line">
+                      No content available
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </motion.div>
