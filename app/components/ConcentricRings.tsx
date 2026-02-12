@@ -1,12 +1,11 @@
 "use client";
 
-
 import Ring from "./Ring";
 import { RingData, RingType } from "../data/RingData";
 import { useState } from "react";
 import RingSelection from "./RingSelection";
 import OrbitItem, { OrbitItemType } from "./OrbitItem";
-import { useViewportMin, getSize } from "../utils/layout";
+import { useViewportMin, getSize } from "../utils/layout-utils";
 
 interface ConcentricRingsProps {
   onItemClick: (item?: OrbitItemType) => void;

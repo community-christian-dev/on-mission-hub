@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useViewportMin, getSize } from "../utils/layout";
+import { useViewportMin, getSize } from "../utils/layout-utils";
 
 interface Props {
   bgColor: string;
