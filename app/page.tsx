@@ -29,6 +29,7 @@ export default function Home() {
     useState(false);
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [isPrayerModalLoading, setIsPrayerModalLoading] = useState(false);
+  const [isPrayerSessionOpen, setIsPrayerSessionOpen] = useState(false);
   const [prayerQueue, setPrayerQueue] = useState<OrbitItemType[]>([]);
 
   const openEditModal = (item?: OrbitItemType) => {
@@ -93,7 +94,7 @@ export default function Home() {
         openEditModal={openEditModal}
         openReadingModal={() => setIsReadingModalOpen(true)}
         openMonthlyActionModal={() => setIsMonthlyActionModalOpen(true)}
-        openPrayerModal={() => startPrayer()}
+        openPrayerModal={() => setIsPrayerSessionOpen(true)}
       />
       <ConcentricRings onItemClick={openEditModal} items={items} />
       <AnimatePresence>
@@ -112,7 +113,6 @@ export default function Home() {
           isOpen={isReadingModalOpen}
           closeModal={() => setIsReadingModalOpen(false)}
         />
-        <PrayerSession items={items} />
         <PrayerModal
           key="prayer"
           isOpen={isPrayerModalOpen}
@@ -125,6 +125,13 @@ export default function Home() {
           isOpen={isMonthlyActionModalOpen}
           closeModal={() => setIsMonthlyActionModalOpen(false)}
         />
+        {isPrayerSessionOpen && (
+          <PrayerSession
+            key="prayer-session"
+            items={prayerQueue}
+            onClose={() => setIsPrayerSessionOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { X, Sparkles, Loader2, Check, ArrowRight } from "lucide-react";
 import { PiHandsPraying } from "react-icons/pi";
 import { AnimatePresence, motion } from "framer-motion";
-import { Card } from "../ui/card";
 
 interface PrayerSessionProps {
   items: OrbitItem[];
@@ -12,7 +11,7 @@ interface PrayerSessionProps {
 const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   const [sessionState, setSessionState] = useState<
     "intro" | "loading" | "praying" | "completed"
-  >("praying");
+  >("intro");
   const [prompts, setPrompts] = useState<{ itemId: number; text: string }[]>(
     [],
   );
@@ -47,10 +46,10 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   const handleNext = async () => {
     // Log the completed prayer
     const currentPrompt = prompts[currentIndex];
-    logPrayerMutation.mutate({
-      orbitItemId: currentPrompt.itemId,
-      prompt: currentPrompt.text,
-    });
+    // logPrayerMutation.mutate({
+    //   orbitItemId: currentPrompt.itemId,
+    //   prompt: currentPrompt.text,
+    // });
 
     if (currentIndex < prompts.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -61,7 +60,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
 
   const currentPrompt = prompts[currentIndex];
   // const currentItem = items.find((i) => i.id === currentPrompt?.itemId);
-  const currentItem = items[1];
+  const currentItem = items[currentIndex];
 
   const colorMap: { [key: string]: string } = {
     center: "bg-yellow-500",
@@ -72,7 +71,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-r from-indigo-950/70 to-blue-950/70 backdrop-blur-sm p-4">
       <button
         className="absolute top-8 right-8 text-slate-400 hover:text-white transition-colors"
         onClick={onClose}
@@ -89,15 +88,18 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
             exit={{ opacity: 0, y: -20 }}
             className="text-center max-w-md space-y-6"
           >
-            <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            {/* <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <PiHandsPraying className="w-10 h-10 text-indigo-500 " />
-            </div>
+            </div> */}
             <h2 className="text-3xl font-bold text-white">Guided Prayer</h2>
             <p className="text-slate-400 text-lg">
               Take a few moments to lift up the people in your orbit. We'll
               guide you through 3 short prayer points.
             </p>
-            <button className="w-full text-white text-lg font-bold h-14 bg-gradient-to-r from-indigo-500 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 transition-all rounded-xl">
+            <button
+              onClick={handleStart}
+              className="w-full text-white text-lg font-bold h-14 bg-gradient-to-r from-indigo-500 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 transition-all rounded-xl"
+            >
               Start Prayer Session
             </button>
           </motion.div>
@@ -111,7 +113,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
             exit={{ opacity: 0 }}
             className="text-center"
           >
-            <Loader2 className="w-12 h-12 text-sky-400 animate-spin mx-auto mb-4" />
+            <Loader2 className="w-12 h-12 text-indigo-400 animate-spin mx-auto mb-4" />
             <p className="text-slate-400">Preparing your prayer guide...</p>
           </motion.div>
         )}
@@ -130,12 +132,12 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
               <div className="p-8 space-y-6">
                 <div className="flex items-center space-x-5 mb-8">
                   <div
-                    className={`${colorMap[currentItem.ring] || "bg-indigo-500"} w-14 h-14 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl`}
+                    className={`${colorMap[currentItem.ring] || "bg-indigo-500"} w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-xl`}
                   >
                     {currentItem.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-white">
                       {currentItem.name}
                     </h2>
                     <p className="text-sm font-mono uppercase text-slate-400">
@@ -153,7 +155,10 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
                 </div>
 
                 <div className="pt-6 flex justify-end">
-                  <button className="gap-2 px-8 py-2 text-lg font-bold bg-indigo-500/50 hover:bg-indigo-500/60 transition-colors rounded-xl">
+                  <button
+                    onClick={handleNext}
+                    className="gap-2 px-8 py-2 text-lg font-bold bg-indigo-500/60 hover:bg-indigo-500/70 transition-colors rounded-xl"
+                  >
                     <ArrowRight size={18} strokeWidth={3} />
                   </button>
                 </div>
@@ -172,7 +177,7 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center max-w-md space-y-6"
           >
-            <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-500" />
             </div>
             <h2 className="text-3xl font-bold text-white">Amen.</h2>
@@ -180,7 +185,10 @@ const PrayerSession = ({ items, onClose }: PrayerSessionProps) => {
               You've intentionally cared for your orbit today. Great work being
               on mission.
             </p>
-            <button className="w-full border border-white text-lg font-bold h-12 hover:bg-white/10 transition-colors rounded-xl">
+            <button
+              onClick={onClose}
+              className="w-full border border-white text-lg font-bold h-12 hover:bg-white/10 transition-colors rounded-xl"
+            >
               Return to Orbit
             </button>
           </motion.div>
