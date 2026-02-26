@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { X, Loader2, Check, ArrowRight } from "lucide-react";
-// import { PiHandsPraying } from "react-icons/pi"; // Unused in this snippet
 import { AnimatePresence, motion } from "framer-motion";
 import { OrbitItemType } from "../OrbitItem";
 import { useGeneratePrayerPrompts } from "../../hooks/usePrayer";

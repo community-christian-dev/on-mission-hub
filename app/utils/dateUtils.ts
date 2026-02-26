@@ -1,4 +1,14 @@
 /**
+ * Parse a YYYY-MM-DD string as a local date (not UTC)
+ * Prevents timezone offset issues
+ */
+function parseDateString(dateStr: string): Date {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    // Create date in local time (month is 0-indexed)
+    return new Date(year, month - 1, day);
+}
+
+/**
  * Get the current date in NY timezone (America/New_York)
  * Optionally accepts a test date override from localStorage
  */
@@ -7,7 +17,7 @@ export function getCurrentNYDate(): Date {
     if (typeof window !== "undefined") {
         const override = localStorage.getItem("dateOverride");
         if (override) {
-            return new Date(override + "T00:00:00");
+            return parseDateString(override);
         }
     }
 
@@ -46,4 +56,13 @@ export function getCurrentMonthKey(date?: Date): string {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     return `${year}-${month}`;
+}
+
+/**
+ * Parse a YYYY-MM-DD string as a local date
+ * Exported for use in other components
+ */
+export function parseLocalDate(dateStr: string): Date {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
 }

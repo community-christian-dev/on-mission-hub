@@ -7,8 +7,18 @@ export const useViewportMin = () => {
     const update = () =>
       setMinSize(Math.min(window.innerWidth, window.innerHeight));
     update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    
+    let timeoutId: NodeJS.Timeout;
+    const debouncedUpdate = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(update, 150);
+    };
+    
+    window.addEventListener("resize", debouncedUpdate);
+    return () => {
+      window.removeEventListener("resize", debouncedUpdate);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return minSize;

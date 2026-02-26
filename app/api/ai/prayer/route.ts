@@ -14,17 +14,39 @@ interface OrbitItem {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { items } = body as { items: OrbitItem[] };
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OpenAI API key not configured" },
+        { status: 500 }
+      );
+    }
 
-    if (!items || items.length === 0) {
+    const body = await req.json() as { items?: OrbitItem[] };
+    const { items } = body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ prompts: [] });
+    }
+
+    if (items.length > 50) {
+      return NextResponse.json(
+        { error: "Too many items. Maximum is 50." },
+        { status: 400 }
+      );
     }
 
     // Generate prayer prompts using OpenAI
     const prompts = await Promise.all(
       items.map(async (item) => {
         try {
+          if (!item.id || !item.name) {
+            console.warn("Skipping invalid item:", item);
+            return {
+              itemId: item.id || "unknown",
+              text: `Pray for the well-being of those you care about.`,
+            };
+          }
+
           const isPlace = item.ring === "places";
           const systemPrompt = isPlace ?
             "You are a prayer assistant. Write a brief 1-2 sentence prayer for the user to pray in the first person. The subject is a PLACE they visit. Focus on the user being a light there and meeting new people. Start with 'Lord' or 'Father'." :
@@ -64,8 +86,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ prompts });
   } catch (error) {
     console.error("Error in prayer API:", error);
+    const message =
+      error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
-      { error: "Failed to generate prayer prompts" },
+      { error: "Failed to generate prayer prompts", details: message },
       { status: 500 }
     );
   }

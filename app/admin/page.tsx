@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Calendar, BookOpen, Save, Sparkles, Clock, X, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Calendar,
+  BookOpen,
+  Save,
+  Sparkles,
+  Clock,
+  X,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import CalendarView from "../components/Admin/CalendarView";
 import RichTextEditor from "../components/Admin/RichTextEditor";
 import ContentQueue from "../components/Admin/ContentQueue";
@@ -11,11 +20,14 @@ import {
   useSaveMonthlyAction,
   MonthlyAction,
 } from "../hooks/useMonthlyActions";
-import { validateScriptureReference, parseScriptureReference } from "../utils/scriptureUtils";
+import {
+  validateScriptureReference,
+  parseScriptureReference,
+} from "../utils/scriptureUtils";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"readings" | "actions">(
-    "readings"
+    "readings",
   );
 
   // Date override for testing
@@ -36,10 +48,14 @@ export default function AdminPage() {
     if (value) {
       localStorage.setItem("dateOverride", value);
       // Trigger storage event for other components
-      window.dispatchEvent(new StorageEvent("storage", { key: "dateOverride" }));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "dateOverride" }),
+      );
     } else {
       localStorage.removeItem("dateOverride");
-      window.dispatchEvent(new StorageEvent("storage", { key: "dateOverride" }));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "dateOverride" }),
+      );
     }
   };
 
@@ -69,7 +85,9 @@ export default function AdminPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [actionTitle, setActionTitle] = useState("");
   const [actionContent, setActionContent] = useState("");
-  const [releaseDate, setReleaseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [releaseDate, setReleaseDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
 
   // Hooks
   const { data: readings = [], isLoading: readingsLoading } = useReadings();
@@ -132,7 +150,7 @@ export default function AdminPage() {
       // Save the API-formatted reference (e.g., "MAT.2" or "JHN.3.16")
       await saveReading.mutateAsync({
         date: selectedDate,
-        reference: validation.parsed!.formatted
+        reference: validation.parsed!.formatted,
       });
       alert(`Reading saved: ${validation.parsed!.display}`);
     } catch (error) {
@@ -193,10 +211,11 @@ export default function AdminPage() {
             {/* Date Override Toggle */}
             <button
               onClick={() => setShowDateOverride(!showDateOverride)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${dateOverride
-                ? "bg-amber-600/20 text-amber-400 border border-amber-600/50"
-                : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-600"
-                }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                dateOverride
+                  ? "bg-amber-600/20 text-amber-400 border border-amber-600/50"
+                  : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-600"
+              }`}
             >
               <Clock size={18} />
               {dateOverride ? "Testing Mode" : "Set Test Date"}
@@ -229,12 +248,18 @@ export default function AdminPage() {
               {dateOverride && (
                 <p className="text-xs text-amber-400/70 mt-2">
                   System will behave as if today is{" "}
-                  {new Date(dateOverride).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {(() => {
+                    const [year, month, day] = dateOverride
+                      .split("-")
+                      .map(Number);
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    });
+                  })()}
                 </p>
               )}
             </div>
@@ -245,10 +270,11 @@ export default function AdminPage() {
         <div className="flex gap-2 mb-6 border-b border-zinc-800">
           <button
             onClick={() => setActiveTab("readings")}
-            className={`px-6 py-3 font-semibold transition-colors relative ${activeTab === "readings"
-              ? "text-sky-400"
-              : "text-zinc-500 hover:text-zinc-300"
-              }`}
+            className={`px-6 py-3 font-semibold transition-colors relative ${
+              activeTab === "readings"
+                ? "text-sky-400"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
           >
             <div className="flex items-center gap-2">
               <BookOpen size={18} />
@@ -260,10 +286,11 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("actions")}
-            className={`px-6 py-3 font-semibold transition-colors relative ${activeTab === "actions"
-              ? "text-purple-400"
-              : "text-zinc-500 hover:text-zinc-300"
-              }`}
+            className={`px-6 py-3 font-semibold transition-colors relative ${
+              activeTab === "actions"
+                ? "text-purple-400"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
           >
             <div className="flex items-center gap-2">
               <Calendar size={18} />
@@ -297,9 +324,13 @@ export default function AdminPage() {
                 <form onSubmit={handleSaveReading} className="space-y-4">
                   {selectedDate && (
                     <div className="bg-zinc-900 p-3 rounded-lg">
-                      <p className="text-sm text-zinc-400 mb-1">Selected Date</p>
+                      <p className="text-sm text-zinc-400 mb-1">
+                        Selected Date
+                      </p>
                       <p className="text-white font-semibold">
-                        {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", {
+                        {new Date(
+                          selectedDate + "T00:00:00",
+                        ).toLocaleDateString("en-US", {
                           weekday: "long",
                           year: "numeric",
                           month: "long",
@@ -319,12 +350,13 @@ export default function AdminPage() {
                         value={reference}
                         onChange={(e) => setReference(e.target.value)}
                         disabled={!selectedDate}
-                        className={`w-full p-3 pr-10 rounded-lg bg-zinc-900 border text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${!reference.trim()
-                          ? "border-zinc-700 focus:border-sky-500"
-                          : referenceValid
-                            ? "border-green-600 focus:border-green-500"
-                            : "border-red-600 focus:border-red-500"
-                          }`}
+                        className={`w-full p-3 pr-10 rounded-lg bg-zinc-900 border text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                          !reference.trim()
+                            ? "border-zinc-700 focus:border-sky-500"
+                            : referenceValid
+                              ? "border-green-600 focus:border-green-500"
+                              : "border-red-600 focus:border-red-500"
+                        }`}
                       />
                       {reference.trim() && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -345,7 +377,8 @@ export default function AdminPage() {
                     {referenceValid && reference.trim() && (
                       <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
                         <CheckCircle size={12} />
-                        Will be saved as: {parseScriptureReference(reference)?.display}
+                        Will be saved as:{" "}
+                        {parseScriptureReference(reference)?.display}
                       </p>
                     )}
                     <p className="text-xs text-zinc-500 mt-1">
@@ -456,7 +489,8 @@ export default function AdminPage() {
                       />
                     </div>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Exact date this action becomes active (default is 1st of month)
+                      Exact date this action becomes active (default is 1st of
+                      month)
                     </p>
                   </div>
 

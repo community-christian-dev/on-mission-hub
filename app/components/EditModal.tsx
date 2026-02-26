@@ -3,19 +3,22 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Trash2 } from "lucide-react";
 import { RingData } from "../data/RingData";
+import { useState } from "react";
+
+interface FormData {
+  name: string;
+  ring: string;
+  prayer: string;
+}
 
 interface Props {
   closeModal: () => void;
   editingId: string | null;
-  formData: {
-    name: string;
-    ring: string;
-    prayer: string;
-  };
+  formData: FormData;
   handleDelete: (id: string) => void;
   handleSave: (e?: React.SyntheticEvent) => void;
   isOpen: boolean;
-  setFormData: (newFormData: any) => void;
+  setFormData: (newFormData: FormData) => void;
 }
 
 const EditModal = ({
@@ -27,6 +30,31 @@ const EditModal = ({
   isOpen,
   setFormData,
 }: Props) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (formData.name.trim().length > 100) {
+      newErrors.name = "Name must be less than 100 characters";
+    }
+
+    if (!formData.ring) {
+      newErrors.ring = "Orbit Level is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitForm = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      handleSave(e);
+    }
+  };
   return (
     <AnimatePresence>
       {isOpen && (
@@ -55,7 +83,7 @@ const EditModal = ({
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSubmitForm} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-zinc-400 mb-1">
                   Name / Place
@@ -63,13 +91,22 @@ const EditModal = ({
                 <input
                   autoFocus
                   type="text"
+                  maxLength={100}
                   value={formData.name || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-white focus:outline-none focus:ring-1 focus:ring-zinc-600"
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (errors.name) setErrors({ ...errors, name: "" });
+                  }}
+                  className={`w-full bg-zinc-800 border rounded-lg p-3 text-white focus:outline-none focus:ring-1 transition-colors ${
+                    errors.name
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-zinc-700 focus:ring-zinc-600"
+                  }`}
                   placeholder="e.g. Alex, Kroger, etc."
                 />
+                {errors.name && (
+                  <p className="text-red-400 text-xs mt-1">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-zinc-400 mb-1">

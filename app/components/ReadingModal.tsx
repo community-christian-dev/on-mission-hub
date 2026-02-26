@@ -1,10 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, BookOpen, Loader2 } from "lucide-react";
+import DOMPurify from "dompurify";
 import { useGetReadingContent } from "../hooks/useGetReadingContent";
 import { useReadings } from "../hooks/useReadings";
-import { getCurrentNYDate, formatDateKey } from "../utils/dateUtils";
+import {
+  getCurrentNYDate,
+  formatDateKey,
+  parseLocalDate,
+} from "../utils/dateUtils";
 
 interface ReadingModalProps {
   isOpen: boolean;
@@ -56,9 +61,31 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
     {
       queryKey: ["reading", "111", reference || ""],
       enabled: !!reference && isOpen,
-    }
+    },
   );
-
+  // Sanitize HTML content with DOMPurify
+  const sanitizedContent = useMemo(() => {
+    if (!data?.content) return '"';
+    try {
+      return DOMPurify.sanitize(data.content, {
+        ALLOWED_TAGS: [
+          "p",
+          "br",
+          "b",
+          "i",
+          "em",
+          "strong",
+          "span",
+          "div",
+          "sup",
+        ],
+        ALLOWED_ATTR: ["class"],
+      });
+    } catch (e) {
+      console.error("Error sanitizing content:", e);
+      return "";
+    }
+  }, [data?.content]);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -84,12 +111,11 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                 </h2>
                 <p className="text-sm text-zinc-400 font-mono uppercase tracking-wider mt-1">
                   {todayKey
-                    ? new Date(todayKey + "T00:00:00").toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })
+                    ? parseLocalDate(todayKey).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      })
                     : "Today's Reading"}
                 </p>
               </div>
@@ -132,7 +158,9 @@ const ReadingModal = ({ isOpen, closeModal }: ReadingModalProps) => {
                   ) : data?.content ? (
                     <div
                       className="text-xl leading-loose text-slate-300 font-serif"
-                      dangerouslySetInnerHTML={{ __html: data.content }}
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizedContent,
+                      }}
                     />
                   ) : (
                     <div className="text-xl leading-loose text-slate-300 font-serif whitespace-pre-line">

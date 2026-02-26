@@ -17,6 +17,7 @@ export const useOrbit = () => {
     const { user } = useAuth();
     const [items, setItems] = useState<OrbitItemType[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) {
@@ -27,14 +28,23 @@ export const useOrbit = () => {
 
         const q = query(collection(db, "users", user.uid, "orbitItems"));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const newItems: OrbitItemType[] = [];
-            snapshot.forEach((doc) => {
-                newItems.push({ id: doc.id, ...doc.data() } as OrbitItemType);
-            });
-            setItems(newItems);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const newItems: OrbitItemType[] = [];
+                snapshot.forEach((doc) => {
+                    newItems.push({ id: doc.id, ...doc.data() } as OrbitItemType);
+                });
+                setItems(newItems);
+                setLoading(false);
+                setError(null);
+            },
+            (err) => {
+                console.error("Error fetching orbit items:", err);
+                setError("Failed to load orbit items");
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [user]);
@@ -42,9 +52,16 @@ export const useOrbit = () => {
     const addItem = async (
         item: Omit<OrbitItemType, "id">
     ): Promise<string | undefined> => {
-        if (!user) return;
+        if (!user) {
+            console.error("No user authenticated");
+            return;
+        }
         if (!item.ring) {
             console.error("Orbit item is missing required 'ring' field:", item);
+            return;
+        }
+        if (!item.name?.trim()) {
+            console.error("Orbit item is missing required 'name' field");
             return;
         }
         try {
@@ -58,6 +75,7 @@ export const useOrbit = () => {
             return docRef.id;
         } catch (error) {
             console.error("Error adding item:", error);
+            setError("Failed to add item");
         }
     };
 
@@ -71,6 +89,7 @@ export const useOrbit = () => {
             await updateDoc(itemRef, data);
         } catch (error) {
             console.error("Error updating item:", error);
+            setError("Failed to update item");
         }
     };
 
@@ -81,8 +100,9 @@ export const useOrbit = () => {
             await deleteDoc(itemRef);
         } catch (error) {
             console.error("Error deleting item:", error);
+            setError("Failed to delete item");
         }
     };
 
-    return { items, loading, addItem, updateItem, deleteItem };
+    return { items, loading, error, addItem, updateItem, deleteItem };
 };

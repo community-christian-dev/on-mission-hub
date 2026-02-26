@@ -6,7 +6,13 @@ export async function GET(request: Request) {
     const bibleId = url.searchParams.get("bibleId") || "111";
     const passage = url.searchParams.get("passage") || "JHN.3";
     const format = url.searchParams.get("format") || "html";
-
+    // Validate inputs
+    if (!passage || passage.length > 100) {
+      return NextResponse.json(
+        { error: "Invalid passage parameter" },
+        { status: 400 }
+      );
+    }
     const apiKey = process.env.YOUVERSION_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -28,8 +34,9 @@ export async function GET(request: Request) {
 
     if (!res.ok) {
       const text = await res.text();
+      console.error(`YouVersion API error (${res.status}):`, text);
       return NextResponse.json(
-        { error: "Upstream error", details: text },
+        { error: "Failed to fetch scripture reading", details: text },
         { status: res.status },
       );
     }
@@ -37,8 +44,7 @@ export async function GET(request: Request) {
     const body = await res.json();
     // return upstream body as-is — the client hook will normalize
     return NextResponse.json(body);
-  } catch (err: any) {
-    return NextResponse.json(
+  } catch (err: any) {    console.error("Error in reading API:", err);    return NextResponse.json(
       { error: err?.message || "Unknown error" },
       { status: 500 },
     );
